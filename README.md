@@ -1,59 +1,373 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PHP_Laravel12_Set_Logout_SessionTimeout
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# Step 1: Install Laravel 12 and Create project for use command
+```php
+composer create-project laravel/laravel PHP_Laravel12_Set_Logout_SessionTimeout
+```
+# Now Open Folder for 
+```php
+cd PHP_Laravel12_Set_Logout_SessionTimeout
+```
+# Step 2: Setup DataBase For .env file
+```php
+ DB_CONNECTION=mysql
+ DB_HOST=127.0.0.1
+ DB_PORT=3306
+ DB_DATABASE=your database name
+ DB_USERNAME=root
+ DB_PASSWORD=
+```
+# Step 3: Create Migration File For Database Table
+```php
+php artisan make:migration create_authentication_table
+```
+```php
+<?php
 
-## About Laravel
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('authentication', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->timestamps();
+        });
+    }
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('authentication');
+    }
+};
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
 
-## Learning Laravel
+# Run migration:
+```php
+php artisan migrate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+# Step 4: Create Model
+```php
+php artisan make:model Authentication
+```
+```php
+<?php
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+namespace App\Models;
 
-## Laravel Sponsors
+use Illuminate\Database\Eloquent\Model;
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+class Authentication extends Model
+{
+  protected $table = 'authentication';
+  protected $fillable = ['name','email','password'];
+}
+```
+# Step 5: Create Contaroller 
+```php
+php artisan make:controller AuthController
+```
+```php
+<?php
 
-### Premium Partners
+namespace App\Http\Controllers;
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+use App\Models\Authentication;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 
-## Contributing
+class AuthController extends Controller
+{
+    // ================= REGISTER =================
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required',
+            'email'    => 'required|email|unique:authentication',
+            'password' => 'required|min:6'
+        ]);
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+        Authentication::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password)
+        ]);
 
-## Code of Conduct
+        return redirect('/login')->with('success', 'Registration successful');
+    }
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    // ================= LOGIN =================
+public function login(Request $request)
+{
+    $user = Authentication::where('email', $request->email)->first();
 
-## Security Vulnerabilities
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return back()->with('error', 'Email or Password is incorrect');
+    }
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    $seconds = 35; //  session duration (changeable)
 
-## License
+    Session::put('user_id', $user->id);
+    Session::put('user_name', $user->name);
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    //  expiry timestamp store
+    Session::put('session_expires_at', time() + $seconds);
+
+    return redirect('/dashboard');
+}
+
+
+    // ================= DASHBOARD =================
+   public function dashboard()
+{
+    if (!Session::has('user_id')) {
+        return redirect('/login');
+    }
+
+    if (time() > Session::get('session_expires_at')) {
+        Session::flush();
+        return redirect('/login')->with('session_expired', true);
+    }
+
+    return view('dashboard');
+}
+
+    // ================= LOGOUT =================
+    public function logout()
+    {
+        Session::flush();
+        return redirect('/login');
+    }
+}
+```
+# Step 6: Create Route For Web.php file
+
+Routes/web.php
+```php
+<?php
+
+use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Route;
+
+// Pages
+Route::view('/register', 'register');
+Route::view('/login', 'login');
+
+// Actions
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/dashboard', [AuthController::class, 'dashboard']);
+Route::post('/logout', [AuthController::class, 'logout']);
+```
+# Step 6: Create Blade file and layout file in resource/view folder
+# resources/views/layout.blade.php
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Laravel Auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!--  Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!--  Custom Style -->
+    <style>
+        body {
+            background: linear-gradient(120deg, #6f86d6, #48c6ef);
+            min-height: 100vh;
+        }
+        .auth-card {
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    @yield('content')
+</div>
+
+<!--  Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+@yield('scripts')
+
+</body>
+</html>
+```
+# resources/views/register.blade.php
+```php
+@extends('layout')
+
+@section('content')
+<div class="card auth-card shadow p-4" style="width: 400px;">
+    <h3 class="text-center mb-4">Register</h3>
+
+    <form method="POST" action="/register">
+        @csrf
+
+        <div class="mb-3">
+            <input type="text" name="name" class="form-control" placeholder="Full Name" required>
+        </div>
+
+        <div class="mb-3">
+            <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+        </div>
+
+        <div class="mb-3">
+            <input type="password" name="password" class="form-control" placeholder="Password" required>
+        </div>
+
+        <button class="btn btn-primary w-100">Register</button>
+    </form>
+
+    <p class="text-center mt-3">
+        Already have an account?
+        <a href="/login">Login</a>
+    </p>
+</div>
+@endsection
+
+```
+# resources/views/login.blade.php 
+```php
+@extends('layout')
+
+@section('content')
+<div class="card auth-card shadow p-4" style="width: 400px;">
+    <h3 class="text-center mb-4">Login</h3>
+
+    <form method="POST" action="/login">
+        @csrf
+
+        <div class="mb-3">
+            <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+        </div>
+
+        <div class="mb-3">
+            <input type="password" name="password" class="form-control" placeholder="Password" required>
+        </div>
+
+        <button class="btn btn-success w-100">Login</button>
+    </form>
+
+    <p class="text-center mt-3">
+        Don’t have an account?
+        <a href="/register">Register</a>
+    </p>
+</div>
+@endsection
+
+@section('scripts')
+@if(session('session_expired'))
+<script>
+    alert("⚠️ Your session has expired. Please login again.");
+</script>
+@endif
+@endsection
+```
+
+# resources/views/dashboard.blade.php 
+```php
+@extends('layout')
+
+@section('content')
+<div class="card shadow p-5 text-center" style="width: 520px;">
+
+    <h2 class="mb-2">
+        Welcome {{ session('user_name') }} 🎉
+    </h2>
+
+    <p class="text-muted mb-3">
+        Your session will expire in
+        <strong class="text-danger">
+            <span id="countdown"></span>
+        </strong>
+        seconds
+    </p>
+
+    <form id="logoutForm" method="POST" action="/logout">
+        @csrf
+        <button class="btn btn-danger mt-3">Logout</button>
+    </form>
+
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    /* ===============================
+        LIVE SESSION COUNTDOWN
+    =============================== */
+    let expiryTime = {{ session('session_expires_at') }} * 1000;
+
+    let timer = setInterval(function () {
+        let now = new Date().getTime();
+        let diff = Math.floor((expiryTime - now) / 1000);
+
+        if (diff <= 0) {
+            clearInterval(timer);
+            alert("⚠️ Your session has expired!");
+            document.getElementById('logoutForm').submit();
+        } else {
+            document.getElementById("countdown").innerText = diff;
+        }
+    }, 1000);
+
+    /* ===============================
+        WINDOW / TAB CLOSE LOGOUT
+    =============================== */
+    window.addEventListener("beforeunload", function () {
+
+        navigator.sendBeacon("/logout", new URLSearchParams({
+            _token: "{{ csrf_token() }}"
+        }));
+
+    });
+</script>
+@endsection
+```
+# Step 7: Now Run Server and paste this url
+```php
+php artisan serve
+http://127.0.0.1:8000/register
+```
+<img width="1437" height="705" alt="image" src="https://github.com/user-attachments/assets/0583b9cd-69f9-4439-8c0d-8df4399a022b" />
+
+# Now After Successful Registration and  redirect page login
+<img width="1148" height="450" alt="image" src="https://github.com/user-attachments/assets/77a3bcde-6c03-4099-a212-621cc10545ba" />
+
+
+ 
+
+# Now Complete successful login and open welcome dashboard page and your logout session timing starting and after second finished then automatically  your login id is logout and page redirect to login page :
+ <img width="897" height="381" alt="image" src="https://github.com/user-attachments/assets/d7965cd4-aa6f-4f3b-8eb3-07f10ab44390" />
+ <img width="1622" height="693" alt="image" src="https://github.com/user-attachments/assets/1337985d-cf94-4dd0-9f7e-8df1684a0610" />
+
+
+ 
+
+
+
+
+
+
+
