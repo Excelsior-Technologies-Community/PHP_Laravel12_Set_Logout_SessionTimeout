@@ -10,7 +10,7 @@
     <p class="text-muted mb-3">
         Your session will expire in
         <strong class="text-danger">
-            <span id="countdown"></span>
+            <span id="countdown">--</span>
         </strong>
         seconds
     </p>
@@ -25,9 +25,7 @@
 
 @section('scripts')
 <script>
-    /* ===============================
-       ⏱️ LIVE SESSION COUNTDOWN
-    =============================== */
+    /* ========= LIVE COUNTDOWN ========= */
     let expiryTime = {{ session('session_expires_at') }} * 1000;
 
     let timer = setInterval(function () {
@@ -43,16 +41,11 @@
         }
     }, 1000);
 
-
-    /* ===============================
-       ❌ WINDOW / TAB CLOSE LOGOUT
-    =============================== */
+    /* ========= WINDOW CLOSE LOGOUT ========= */
     window.addEventListener("beforeunload", function () {
-
         navigator.sendBeacon("/logout", new URLSearchParams({
             _token: "{{ csrf_token() }}"
         }));
-
     });
 </script>
 @endsection
