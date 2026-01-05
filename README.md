@@ -175,7 +175,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/dashboard', [AuthController::class, 'dashboard']);
 Route::post('/logout', [AuthController::class, 'logout']);
 ```
-# Step 6: Create Blade file and layout file in resource/view folder
+# Step 7: Create Blade file and layout file in resource/view folder
 # resources/views/layout.blade.php
 ```php
 <!DOCTYPE html>
@@ -345,7 +345,7 @@ Route::post('/logout', [AuthController::class, 'logout']);
 </script>
 @endsection
 ```
-# Step 7: Now Run Server and paste this url
+# Step 8: Now Run Server and paste this url
 ```php
 php artisan serve
 http://127.0.0.1:8000/register
