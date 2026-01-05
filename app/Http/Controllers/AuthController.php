@@ -29,9 +29,9 @@ class AuthController extends Controller
             'password.required'=> 'Password is required',
             'password.min'     => 'Password must be at least 6 characters'
         ]
-    );
+     );
 
-    Authentication::create([
+     Authentication::create([
         'name'     => $request->name,
         'email'    => $request->email,
         'password' => Hash::make($request->password)
@@ -65,7 +65,7 @@ public function login(Request $request)
         return back()->with('error', 'Password does not match');
     }
 
-    $seconds = 159;
+    $seconds = 60;
 
     Session::put('user_id', $user->id);
     Session::put('user_name', $user->name);
