@@ -5,11 +5,11 @@
     <h3 class="text-center mb-4">Login</h3>
 
     {{-- Success --}}
-    @if(session('success'))
+     @if(session('success'))
         <div class="alert alert-success">
             {{ session('success') }}
         </div>
-    @endif
+     @endif
 
     {{-- Custom Error --}}
     @if(session('error'))
@@ -51,9 +51,11 @@
 @endsection
 
 @section('scripts')
+
 @if(session('session_expired'))
 <script>
-    alert("⚠️ Your session has expired. Please login again.");
+    alert(" Your session has expired. Please login again.");
 </script>
 @endif
+
 @endsection
